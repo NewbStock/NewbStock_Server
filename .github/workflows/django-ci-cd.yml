@@ -30,7 +30,7 @@ jobs:
           USER: ${{ secrets.EC2_USER }}
         run: |
           echo "$PRIVATE_KEY" > newbstock-server.pem
-          chmod 600 newbstock-server.pem.pem
+          chmod 600 newbstock-server.pem
           ssh -o StrictHostKeyChecking=no -i newbstock-server.pem $USER@$HOST << 'EOF'
             cd /home/ubuntu/NewbStock_Server
 
