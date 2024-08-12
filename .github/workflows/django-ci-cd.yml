@@ -31,6 +31,31 @@ jobs:
         echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/server_key.pem
         chmod 600 ~/.ssh/server_key.pem
 
+    # 1. 호스트 키 검증 문제 확인
+    - name: Test SSH Connection without StrictHostKeyChecking
+      run: |
+        ssh -T -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
+        exit
+        EOF
+      continue-on-error: true
+
+    # 2. SSH 터널링 문제 확인 (Bastion Host 경유하지 않고 직접 연결 시도)
+    - name: Test Direct SSH Connection (if possible)
+      run: |
+        ssh -T -i ~/.ssh/server_key.pem -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
+        exit
+        EOF
+      continue-on-error: true
+
+    # 3. SSH 구성 문제 확인 (SSH Config 파일 없이 연결 시도)
+    - name: Test SSH Connection without using SSH Config
+      run: |
+        ssh -T -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} -i ~/.ssh/server_key.pem ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
+        exit
+        EOF
+      continue-on-error: true
+
+    # 최종 배포 단계
     - name: Deploy to Private Server via Bastion Host
       run: |
         ssh -T -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} -o "UserKnownHostsFile=/dev/null" -o "LogLevel=ERROR" -i ~/.ssh/server_key.pem ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
@@ -42,3 +67,4 @@ jobs:
         python manage.py collectstatic --noinput
         systemctl restart gunicorn
         EOF
+      continue-on-error: false
