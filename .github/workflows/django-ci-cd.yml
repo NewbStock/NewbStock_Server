@@ -71,8 +71,12 @@ jobs:
         # 서버 SSH 키를 임시 파일로 저장
         echo "${SERVER_SSH_KEY}" > server_key.pem
         chmod 600 server_key.pem
+        export BASTION_USER=ec2-user
+        export BASTION_HOST=13.209.247.212
+        export SERVER_USER=ubuntu
+        export SERVER_HOST=10.0.138.141
         
-        ssh -i nbastion_key.pem -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ec2-user@13.209.247.212" -i server_key.pem ubuntu@10.0.138.141 << 'EOF'
+        ssh -i bastion_key.pem -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ${BASTION_USER}@${BASTION_HOST}" -i server_key.pem ${SERVER_USER}@${SERVER_HOST} << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
         source /home/ubuntu/NewbStock_Server/venv/bin/activate
