@@ -44,12 +44,9 @@ jobs:
         KEY: ${{ secrets.DEPLOY_KEY }}
         PROJECT_DIR: ${{ secrets.DEPLOY_PROJECT_DIR }}
       run: |
-        # DEPLOY_KEY를 기반으로 SSH 키 파일 생성 및 권한 설정
-        echo "${{ env.KEY }}" > deploy_key.pem
+        echo "${{ secrets.DEPLOY_KEY }}" > deploy_key.pem
         chmod 600 deploy_key.pem
-        
-        # SSH 연결 및 배포 작업 수행
-        ssh -i deploy_key.pem -o StrictHostKeyChecking=no ${{ env.USER }}@${{ env.HOST }} << EOF
+        ssh -i deploy_key.pem -o StrictHostKeyChecking=no -t ${{ env.USER }}@${{ env.HOST }} << EOF
           cd ${{ env.PROJECT_DIR }}
           git pull origin main
           source venv/bin/activate
@@ -59,3 +56,4 @@ jobs:
           sudo systemctl restart gunicorn
           sudo systemctl restart nginx
         EOF
+    
