@@ -23,13 +23,13 @@ jobs:
 
     - name: Activate existing Conda environment
       run: |
-        source activate newbstock
+        conda activate newbstock
         conda install --file requirements.txt -y
         pip install -r requirements.txt
 
     - name: Run tests
       run: |
-        source activate newbstock
+        conda activate newbstock
         python manage.py test
 
   deploy:
@@ -47,7 +47,7 @@ jobs:
 
     - name: Activate existing Conda environment
       run: |
-        source activate newbstock
+        conda activate newbstock
         conda install --file requirements.txt -y
         pip install -r requirements.txt
 
@@ -79,7 +79,7 @@ jobs:
         ssh -i bastion_key.pem -o "StrictHostKeyChecking=no" -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ${BASTION_USER}@${BASTION_HOST}" -i server_key.pem ${SERVER_USER}@${SERVER_HOST} << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
-        source activate newbstock
+        conda activate newbstock
         conda install --file requirements.txt -y
         pip install -r requirements.txt
         python manage.py migrate
