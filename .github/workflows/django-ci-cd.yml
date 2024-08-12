@@ -46,13 +46,13 @@ jobs:
       run: |
         echo "${{ secrets.DEPLOY_KEY }}" > deploy_key.pem
         chmod 600 deploy_key.pem
-        ssh -i deploy_key.pem -o StrictHostKeyChecking=no -T ***@*** << EOF
-        cd ***
-        git pull origin main
-        source venv/bin/activate
-        pip install -r requirements.txt
-        python manage.py migrate
-        python manage.py collectstatic --noinput
-        sudo systemctl restart gunicorn
-        sudo systemctl restart nginx
+        ssh -i deploy_key.pem -o StrictHostKeyChecking=no -T ${{ env.USER }}@${{ env.HOST }} << EOF
+          cd ${{ env.PROJECT_DIR }}
+          git pull origin main
+          source venv/bin/activate
+          pip install -r requirements.txt
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          sudo systemctl restart gunicorn
+          sudo systemctl restart nginx
         EOF
