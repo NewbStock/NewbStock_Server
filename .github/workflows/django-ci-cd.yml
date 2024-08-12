@@ -1,70 +1,67 @@
-name: Django CI/CD Pipeline
+name: Django CI
 
 on:
   push:
     branches:
-      - main  # main 브랜치에 푸시할 때마다 워크플로우가 실행됩니다.
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out code
-      uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v3
       with:
-        python-version: '3.12.3'
+        python-version: '3.12'
 
-    - name: Create .ssh directory
-      run: mkdir -p ~/.ssh
-
-    - name: Add Bastion SSH key
+    - name: Install dependencies
       run: |
-        echo "${{ secrets.BASTION_SSH_KEY }}" > ~/.ssh/bastion_key.pem
-        chmod 600 ~/.ssh/bastion_key.pem
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-    - name: Add Server SSH key
-      run: |
-        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/server_key.pem
-        chmod 600 ~/.ssh/server_key.pem
+    - name: Run tests
+      run: python manage.py test
 
-    # 1. 호스트 키 검증 문제 확인
-    - name: Test SSH Connection without StrictHostKeyChecking
-      run: |
-        ssh -T -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
-        exit
-        EOF
-      continue-on-error: true
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
 
-    # 2. SSH 터널링 문제 확인 (Bastion Host 경유하지 않고 직접 연결 시도)
-    - name: Test Direct SSH Connection (if possible)
-      run: |
-        ssh -T -i ~/.ssh/server_key.pem -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
-        exit
-        EOF
-      continue-on-error: true
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
 
-    # 3. SSH 구성 문제 확인 (SSH Config 파일 없이 연결 시도)
-    - name: Test SSH Connection without using SSH Config
-      run: |
-        ssh -T -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} -i ~/.ssh/server_key.pem ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
-        exit
-        EOF
-      continue-on-error: true
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.12'
 
-    # 최종 배포 단계
-    - name: Deploy to Private Server via Bastion Host
+    - name: Install dependencies
       run: |
-        ssh -T -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} -o "UserKnownHostsFile=/dev/null" -o "LogLevel=ERROR" -i ~/.ssh/server_key.pem ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Deploy to server through Bastion Host
+      env:
+        BASTION_HOST: ${{ secrets.BASTION_HOST }}
+        BASTION_USER: ${{ secrets.BASTION_USER }}
+        BASTION_SSH_KEY: ${{ secrets.BASTION_SSH_KEY }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      run: |
+        ssh -i $BASTION_SSH_KEY -o "ProxyCommand=ssh -i $BASTION_SSH_KEY -W %h:%p $BASTION_USER@$BASTION_HOST" $SERVER_USER@$SERVER_HOST << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
         source /home/ubuntu/NewbStock_Server/venv/bin/activate
         pip install -r requirements.txt
         python manage.py migrate
-        python manage.py collectstatic --noinput
-        systemctl restart gunicorn
+        sudo systemctl restart gunicorn
+        sudo systemctl restart nginx
         EOF
-      continue-on-error: false
