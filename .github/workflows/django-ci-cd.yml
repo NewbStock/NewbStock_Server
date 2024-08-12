@@ -16,7 +16,10 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
-        python-version: '3.8'
+        python-version: '3.12.3'
+
+    - name: Create .ssh directory
+      run: mkdir -p ~/.ssh
 
     - name: Add Bastion SSH key
       run: |
