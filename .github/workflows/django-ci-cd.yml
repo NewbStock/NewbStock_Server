@@ -23,7 +23,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        conda activate newbstock
         pip install -r requirements.txt
 
     - name: Run tests
@@ -72,7 +71,6 @@ jobs:
         
         # Bastion을 통해 서버에 연결하여 명령어 실행
         ssh -i bastion_key.pem -o "StrictHostKeyChecking=no" -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ${BASTION_USER}@${BASTION_HOST}" -i server_key.pem ${SERVER_USER}@${SERVER_HOST} << 'EOF'
-        conda activate newbstock
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
         source /home/ubuntu/NewbStock_Server/venv/bin/activate
