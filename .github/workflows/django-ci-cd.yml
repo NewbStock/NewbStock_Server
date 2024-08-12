@@ -33,7 +33,7 @@ jobs:
 
     - name: Deploy to Private Server via Bastion Host
       run: |
-        ssh -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} -i ~/.ssh/server_key.pem ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
+        ssh -T -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} -o "UserKnownHostsFile=/dev/null" -o "LogLevel=ERROR" -i ~/.ssh/server_key.pem ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
         source /home/ubuntu/NewbStock_Server/venv/bin/activate
