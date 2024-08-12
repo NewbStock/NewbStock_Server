@@ -1,57 +1,41 @@
-name: Deploy Django Application
+name: Django CI/CD Pipeline
 
 on:
   push:
     branches:
-      - main  # 자동 배포를 원하는 브랜치
+      - main  # main 브랜치에 푸시할 때마다 워크플로우가 실행됩니다.
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v2
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12.3'
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Add Bastion SSH key
+      run: |
+        echo "${{ secrets.BASTION_SSH_KEY }}" > ~/.ssh/bastion_key.pem
+        chmod 600 ~/.ssh/bastion_key.pem
 
-      - name: Deploy to EC2
-        env:
-          PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          HOST: ${{ secrets.EC2_HOST }}
-          USER: ${{ secrets.EC2_USER }}
-        run: |
-          echo "$PRIVATE_KEY" > newbstock-server.pem
-          chmod 600 newbstock-server.pem
-          ssh -o StrictHostKeyChecking=no -i newbstock-server.pem $USER@$HOST << 'EOF'
-            cd /home/ubuntu/NewbStock_Server
+    - name: Add Server SSH key
+      run: |
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/server_key.pem
+        chmod 600 ~/.ssh/server_key.pem
 
-            # Pull the latest code from the repository
-            git pull origin main
-
-            # Activate the virtual environment
-            source venv/bin/activate
-
-            # Install/update dependencies
-            pip install -r requirements.txt
-
-            # Run database migrations
-            python manage.py migrate
-
-            # Collect static files
-            python manage.py collectstatic --noinput
-
-            # Restart Gunicorn to apply the changes
-            sudo systemctl restart gunicorn
-
-            # Restart Nginx to apply any configuration changes (optional)
-            sudo systemctl restart nginx
-          EOF
+    - name: Deploy to Private Server via Bastion Host
+      run: |
+        ssh -i ~/.ssh/bastion_key.pem -o StrictHostKeyChecking=no -J ${{ secrets.BASTION_USER }}@${{ secrets.BASTION_HOST }} -i ~/.ssh/server_key.pem ${{ secrets.SSH_USER }}@${{ secrets.PRIVATE_HOST }} << 'EOF'
+        cd /home/ubuntu/NewbStock_Server
+        git pull origin main
+        source /home/ubuntu/NewbStock_Server/venv/bin/activate
+        pip install -r requirements.txt
+        python manage.py migrate
+        python manage.py collectstatic --noinput
+        systemctl restart gunicorn
+        EOF
