@@ -72,8 +72,7 @@ jobs:
         echo "${SERVER_SSH_KEY}" > server_key.pem
         chmod 600 server_key.pem
         
-        ssh -i bastion_key.pem -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ${BASTION_USER}@${BASTION_HOST}" -o StrictHostKeyChecking=no -i server_key.pem ${SERVER_USER}@${SERVER_HOST} << 'EOF'
-
+        ssh -i newbstock-Bastion-Host.pem -o "ProxyCommand=ssh -i newbstock-Bastion-Host.pem -W %h:%p ec2-user@13.209.247.212" -i newbstock-server.pem ubuntu@10.0.138.141 << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
         source /home/ubuntu/NewbStock_Server/venv/bin/activate
