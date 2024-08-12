@@ -23,7 +23,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        conda install -r requirements.txt
+        conda install --file requirements.txt
 
     - name: Run tests
       run: python manage.py test
@@ -43,7 +43,7 @@ jobs:
 
     - name: Install dependencies
       run: |
-        conda install -r requirements.txt
+        conda install --file requirements.txt
 
     - name: Deploy to server through Bastion Host
       env:
@@ -73,8 +73,8 @@ jobs:
         ssh -i bastion_key.pem -o "StrictHostKeyChecking=no" -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ${BASTION_USER}@${BASTION_HOST}" -i server_key.pem ${SERVER_USER}@${SERVER_HOST} << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
-        source /home/ubuntu/NewbStock_Server/venv/bin/activate
-        pip install -r requirements.txt
+        conda activate newbstock
+        conda install --file requirements.txt
         python manage.py migrate
         sudo systemctl restart gunicorn
         sudo systemctl restart nginx
