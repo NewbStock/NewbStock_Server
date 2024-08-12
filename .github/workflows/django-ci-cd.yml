@@ -56,7 +56,7 @@ jobs:
         SERVER_USER: ${{ secrets.SERVER_USER }}
         SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
       run: |
-        ssh -i $BASTION_SSH_KEY -o "ProxyCommand=ssh -i $BASTION_SSH_KEY -W %h:%p $BASTION_USER@$BASTION_HOST" $SERVER_USER@$SERVER_HOST << 'EOF'
+        ssh -i "${BASTION_SSH_KEY}" -o "ProxyCommand=ssh -i ${BASTION_SSH_KEY} -W %h:%p ${BASTION_USER}@${BASTION_HOST}" ${SERVER_USER}@${SERVER_HOST} << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
         source /home/ubuntu/NewbStock_Server/venv/bin/activate
