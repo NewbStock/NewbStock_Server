@@ -47,6 +47,14 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: Check SSH Key
+      env:
+        BASTION_SSH_KEY: ${{ secrets.BASTION_SSH_KEY }}
+        SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      run: |
+        echo "Bastion SSH Key starts with: ${BASTION_SSH_KEY:0:10}"
+        echo "Server SSH Key starts with: ${SERVER_SSH_KEY:0:10}"
+
     - name: Deploy to server through Bastion Host
       env:
         BASTION_HOST: ${{ secrets.BASTION_HOST }}
