@@ -64,7 +64,15 @@ jobs:
         SERVER_USER: ${{ secrets.SERVER_USER }}
         SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
       run: |
-        ssh -i "${BASTION_SSH_KEY}" -o "ProxyCommand=ssh -i ${BASTION_SSH_KEY} -W %h:%p ${BASTION_USER}@${BASTION_HOST}" ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+        # Bastion SSH 키를 임시 파일로 저장
+        echo "${BASTION_SSH_KEY}" > bastion_key.pem
+        chmod 600 bastion_key.pem
+
+        # 서버 SSH 키를 임시 파일로 저장
+        echo "${SERVER_SSH_KEY}" > server_key.pem
+        chmod 600 server_key.pem
+        
+        ssh -i bastion_key.pem -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ${BASTION_USER}@${BASTION_HOST}" -i server_key.pem ${SERVER_USER}@${SERVER_HOST} << 'EOF'
         cd /home/ubuntu/NewbStock_Server
         git pull origin main
         source /home/ubuntu/NewbStock_Server/venv/bin/activate
