@@ -29,11 +29,10 @@ jobs:
           HOST: ${{ secrets.EC2_HOST }}
           USER: ${{ secrets.EC2_USER }}
         run: |
-          echo "$PRIVATE_KEY" > private_key.pem
-          chmod 600 private_key.pem
-          ssh -o StrictHostKeyChecking=no -i private_key.pem $USER@$HOST << 'EOF'
-            # Navigate to application directory
-            cd /path/to/your/app
+          echo "$PRIVATE_KEY" > newbstock-server.pem
+          chmod 600 newbstock-server.pem.pem
+          ssh -o StrictHostKeyChecking=no -i newbstock-server.pem $USER@$HOST << 'EOF'
+            cd /home/ubuntu/NewbStock_Server
 
             # Pull the latest code from the repository
             git pull origin main
