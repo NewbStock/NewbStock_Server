@@ -1,0 +1,96 @@
+name: Django CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.12'
+
+    - name: Initialize Conda
+      shell: bash -l {0}
+      run: |
+        conda init bash
+        source ~/.bashrc
+        conda activate newbstock
+        conda install --file requirements.txt -y
+        pip install -r requirements.txt
+
+    - name: Run tests
+      shell: bash -l {0}
+      run: |
+        conda activate newbstock
+        python manage.py test
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v3
+      with:
+        python-version: '3.12'
+
+    - name: Initialize Conda
+      shell: bash -l {0}
+      run: |
+        conda init bash
+        source ~/.bashrc
+        conda activate newbstock
+        conda install --file requirements.txt -y
+        pip install -r requirements.txt
+
+    - name: Deploy to server through Bastion Host
+      shell: bash -l {0}
+      env:
+        BASTION_HOST: ${{ secrets.BASTION_HOST }}
+        BASTION_USER: ${{ secrets.BASTION_USER }}
+        BASTION_SSH_KEY: ${{ secrets.BASTION_SSH_KEY }}
+        SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        SERVER_USER: ${{ secrets.SERVER_USER }}
+        SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+      run: |
+        # Bastion SSH 키를 임시 파일로 저장
+        echo "${BASTION_SSH_KEY}" > bastion_key.pem
+        chmod 600 bastion_key.pem
+
+        # 서버 SSH 키를 임시 파일로 저장
+        echo "${SERVER_SSH_KEY}" > server_key.pem
+        chmod 600 server_key.pem
+        
+        # ~/.ssh 디렉터리 생성
+        mkdir -p ~/.ssh
+        
+        # Host key checking을 피하기 위해 known_hosts 파일을 업데이트
+        ssh-keyscan -H ${BASTION_HOST} >> ~/.ssh/known_hosts || true
+        ssh-keyscan -H ${SERVER_HOST} >> ~/.ssh/known_hosts || true
+        
+        # Bastion을 통해 서버에 연결하여 명령어 실행
+        ssh -i bastion_key.pem -o "StrictHostKeyChecking=no" -o "ProxyCommand=ssh -i bastion_key.pem -W %h:%p ${BASTION_USER}@${BASTION_HOST}" -i server_key.pem ${SERVER_USER}@${SERVER_HOST} << 'EOF'
+        cd /home/ubuntu/NewbStock_Server
+        git pull origin main
+        conda activate newbstock
+        conda install --file requirements.txt -y
+        pip install -r requirements.txt
+        python manage.py migrate
+        sudo systemctl restart gunicorn
+        sudo systemctl restart nginx
+        EOF
