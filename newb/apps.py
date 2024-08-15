@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class NsAppConfig(AppConfig):
+class NewbConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'NS_app'
+    name = 'newb'
