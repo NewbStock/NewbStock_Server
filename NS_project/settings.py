@@ -64,28 +64,28 @@ WSGI_APPLICATION = 'NS_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',  # PostgreSQL 사용
+        'NAME': 'production',  # 실제 데이터베이스 이름
+        'USER': 'newbstock_admin',  # 실제 데이터베이스 사용자
+        'PASSWORD': 'Newbstock001!',  # 사용자 비밀번호
+        'HOST': 'localhost',  # RDS 엔드포인트
+        'PORT': '5432',  # PostgreSQL 기본 포트
+    }
+}
+
+
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'production',
 #         'USER': 'newbstock_admin',
 #         'PASSWORD': 'Newbstock001!',
-#         'HOST': 'newbstock-production-db.ch4xfyi6stod.ap-northeast-2.rds.amazonaws.com' ,
-#         #'HOST': 'localhost',
+#         'HOST': 'localhost',
 #         'PORT': '5432',
 #     }
 # }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'production',
-        'USER': 'newbstock_admin',
-        'PASSWORD': 'Newbstock001!',
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
 
 
 
@@ -134,4 +134,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ALLOWED_HOSTS = [
 	'10.0.138.141',
 	'team-won-2-alb-1672477310.ap-northeast-2.elb.amazonaws.com',
+    '127.0.0.1',
+    'localhost',
 	]

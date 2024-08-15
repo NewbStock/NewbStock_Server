@@ -47,8 +47,8 @@ class InterestRates(models.Model):
     call_rate_bank_securities = models.CharField(max_length=50, db_column='콜금리(1일, 은행증권금융차입)')
     call_rate_total = models.CharField(max_length=50, db_column='콜금리(1일, 전체거래)')
     call_rate_broker_deal = models.CharField(max_length=50, db_column='콜금리(1일, 중개회사거래)')
-    corporate_bond_3y_aa = models.CharField(max_length=50, db_column='회사채(3년, aa-)')
-    corporate_bond_3y_bbb = models.CharField(max_length=50, db_column='회사채(3년, bbb-)')
+    corporate_bond_aa = models.CharField(max_length=50, db_column='회사채(3년, aa-)')
+    corporate_bond_bbb = models.CharField(max_length=50, db_column='회사채(3년, bbb-)')
 
     class Meta:
         db_table = 'market_interest_rates'  
