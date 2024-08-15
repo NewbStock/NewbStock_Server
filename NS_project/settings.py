@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'profit',
     'top3',
+    'newb',
 ]
 
 MIDDLEWARE = [
@@ -63,16 +64,29 @@ WSGI_APPLICATION = 'NS_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'production',
+#         'USER': 'newbstock_admin',
+#         'PASSWORD': 'Newbstock001!',
+#         'HOST': 'newbstock-production-db.ch4xfyi6stod.ap-northeast-2.rds.amazonaws.com' ,
+#         #'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'production',
         'USER': 'newbstock_admin',
         'PASSWORD': 'Newbstock001!',
-        'HOST': 'newbstock-production-db.ch4xfyi6stod.ap-northeast-2.rds.amazonaws.com' ,
+        'HOST': 'localhost',
         'PORT': '5432',
     }
 }
+
 
 
 # Password validation
