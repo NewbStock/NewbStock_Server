@@ -9,4 +9,5 @@ router = DefaultRouter()
 urlpatterns = [
     path('', include(router.urls)),  # 앱의 루트 URL에 DRF 홈 화면 연결
     path('stocktopkr/', StockTop3View.as_view(), name='StockTop3View'),
+    path('highchange/', HighChangeStock.as_view(), name='HighChangeStock'),
 ]
