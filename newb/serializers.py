@@ -31,3 +31,15 @@ class HighUSASerializer(serializers.ModelSerializer):
         model = HighUS
         fields = '__all__'
 
+class StockKRTop100Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockKRTop100
+        fields = '__all__'
+
+class StockUSTop100Serializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockUSTop100
+        fields = '__all__'
+
+
+

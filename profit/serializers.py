@@ -23,8 +23,9 @@ class USSTOCKDATASerializer(serializers.ModelSerializer):
 
 
 class InvestmentCalculationSerializer(serializers.Serializer):
+    country = serializers.CharField(max_length=2)
     company = serializers.CharField(max_length=100)
     initial_amount = serializers.IntegerField()
     initial_date = serializers.DateField()
-    additional_amount = serializers.IntegerField(required=False, allow_null=True)
-    frequency = serializers.ChoiceField(choices=["매주", "격주", "매달", "격달"], required=False, allow_null=True)
+    additional_amount = serializers.IntegerField(required=False, default=0)
+    frequency = serializers.ChoiceField(choices=["weekly", "biweekly", "monthly", "bimonthly"])

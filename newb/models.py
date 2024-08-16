@@ -7,6 +7,7 @@ class ExchangeRate(models.Model):
     yuan = models.CharField(max_length=50, db_column='위안')  
 
     class Meta:
+        managed = False  # Django가 이 테이블을 관리하지 않도록 설정
         db_table = 'exchange_rate' 
 
     def __str__(self):
@@ -19,8 +20,8 @@ class Kospi(models.Model):
     volume = models.CharField(max_length=50, db_column='거래량_코스닥시장')
     amount = models.CharField(max_length=50, db_column='거래대금_코스닥시장')
 
-
     class Meta:
+        managed = False  # Django가 이 테이블을 관리하지 않도록 설정
         db_table = 'kospi' 
 
     def __str__(self):
@@ -31,12 +32,11 @@ class newssentiment(models.Model):
     sentiment = models.CharField(max_length=50, db_column='newssentiment')  
 
     class Meta:
+        managed = False  # Django가 이 테이블을 관리하지 않도록 설정
         db_table = 'newssentiment' 
 
     def __str__(self):
         return f"{self.time} - {self.sentiment}"
-
-
 
 class InterestRates(models.Model):
     time = models.CharField(max_length=50, db_column='time')
@@ -51,6 +51,7 @@ class InterestRates(models.Model):
     corporate_bond_bbb = models.CharField(max_length=50, db_column='회사채(3년, bbb-)')
 
     class Meta:
+        managed = False  # Django가 이 테이블을 관리하지 않도록 설정
         db_table = 'market_interest_rates'  
 
     def __str__(self):
@@ -62,11 +63,11 @@ class HighKR(models.Model):
     change = models.DecimalField(max_digits=10, decimal_places=2, db_column='change')  
 
     class Meta:
+        managed = False  # Django가 이 테이블을 관리하지 않도록 설정
         db_table = 'high_volatility_kr'  
 
     def __str__(self):
         return f"{self.name} on {self.date} - Change: {self.change}"
-
 
 class HighUS(models.Model):
     name = models.CharField(max_length=100, db_column='name')  
@@ -74,7 +75,33 @@ class HighUS(models.Model):
     change = models.DecimalField(max_digits=10, decimal_places=2, db_column='change')  
 
     class Meta:
+        managed = False  # Django가 이 테이블을 관리하지 않도록 설정
         db_table = 'high_volatility_us'  
 
     def __str__(self):
         return f"{self.name} on {self.date} - Change: {self.change}"
+
+
+class StockKRTop100(models.Model):
+    date = models.DateField(db_column='date')
+    name = models.CharField(db_column='name', primary_key=True, max_length=100)
+    code = models.CharField(db_column='code')
+
+    class Meta:
+        managed = False
+        db_table = 'kr_top100'
+
+    def __str__(self):
+        return f"{self.date} - {self.name} ({self.code})"
+    
+class StockUSTop100(models.Model):
+    name = models.CharField(db_column='name', primary_key=True, max_length=100)
+    code = models.CharField(db_column='code')
+    excode = models.CharField(db_column='excode')
+
+    class Meta:
+        managed = False
+        db_table = 'ustop100'
+
+    def __str__(self):
+        return f"{self.name} ({self.code}) - {self.excode}"
