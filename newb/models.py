@@ -1,7 +1,7 @@
 from django.db import models
 
 class ExchangeRate(models.Model):
-    time = models.CharField(max_length=50, db_column='TIME')  
+    time = models.CharField(max_length=50, db_column='time', primary_key=True)  
     yen_100 = models.CharField(max_length=50, db_column='100엔')  
     dollar = models.CharField(max_length=50, db_column='달러') 
     yuan = models.CharField(max_length=50, db_column='위안')  
@@ -14,7 +14,7 @@ class ExchangeRate(models.Model):
         return f"{self.time} - {self.dollar} USD, {self.yen_100} JPY, {self.yuan} CNY"
 
 class Kospi(models.Model):
-    time = models.CharField(max_length=50, db_column='TIME')  
+    time = models.CharField(max_length=50, db_column='time', primary_key=True)  
     kospi = models.CharField(max_length=50, db_column='kospi지수')  
     kosdaq = models.CharField(max_length=50, db_column='kosdaq지수')
     volume = models.CharField(max_length=50, db_column='거래량_코스닥시장')
@@ -28,7 +28,7 @@ class Kospi(models.Model):
         return f"{self.time} - {self.kospi} KOSPI, {self.kosdaq} KOSDAQ, {self.volume} 거래량, {self.amount} 거래대금"
 
 class newssentiment(models.Model):
-    time = models.CharField(max_length=50, db_column='TIME')  
+    time = models.CharField(max_length=50, db_column='time', primary_key=True)  
     sentiment = models.CharField(max_length=50, db_column='newssentiment')  
 
     class Meta:
@@ -39,7 +39,7 @@ class newssentiment(models.Model):
         return f"{self.time} - {self.sentiment}"
 
 class InterestRates(models.Model):
-    time = models.CharField(max_length=50, db_column='time')
+    time = models.CharField(max_length=50, db_column='time', primary_key=True)
     koribor_12m = models.CharField(max_length=50, db_column='koribor(12개월)')
     treasury_10y = models.CharField(max_length=50, db_column='국고채(10년)')
     treasury_2y = models.CharField(max_length=50, db_column='국고채(2년)')
