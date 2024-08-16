@@ -1,96 +1,120 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.exceptions import ValidationError
 from .serializers import InvestmentCalculationSerializer
-from .models import KRSTOCKDATA, USSTOCKDATA
-from datetime import date, timedelta
-import calendar
+from datetime import date
+from django.db import connection
 from drf_yasg.utils import swagger_auto_schema
+import logging
+
+logger = logging.getLogger(__name__)
 
 class InvestmentDataView(APIView):
     """
     API to receive investment data, calculate returns, and return the result.
     """
-    def get_next_investment_date(self, current_date, frequency):
-        """
-        주기(frequency)에 따라 다음 투자 날짜를 계산합니다.
-        """
-        if frequency == "monthly":
-            # 다음 달의 첫 번째 날짜
-            month = current_date.month + 1 if current_date.month < 12 else 1
-            year = current_date.year if month > 1 else current_date.year + 1
-            return date(year, month, 1)
-        elif frequency == "biweekly":
-            return current_date + timedelta(weeks=2)
-        elif frequency == "weekly":
-            return current_date + timedelta(weeks=1)
-        else:
-            # 기본적으로 월간으로 처리
-            month = current_date.month + 1 if current_date.month < 12 else 1
-            year = current_date.year if month > 1 else current_date.year + 1
-            return date(year, month, 1)
-        
+
     @swagger_auto_schema(request_body=InvestmentCalculationSerializer)
     def post(self, request):
-        # JSON 데이터를 받아옴
         serializer = InvestmentCalculationSerializer(data=request.data)
         
         if serializer.is_valid():
             data = serializer.validated_data
             
-            # date 객체를 문자열로 변환
             if isinstance(data['initial_date'], date):
-                data['initial_date'] = data['initial_date'].strftime('%Y-%m-%d')
-            
-            # 투자 데이터 기반으로 수익률 계산
-            try:
-                country = data['country']
-                company = data['company']
-                initial_amount = data['initial_amount']
+                initial_date = data['initial_date']
+            else:
                 initial_date = date.fromisoformat(data['initial_date'])
-                additional_amount = data.get('additional_amount', 0)
-                frequency = data.get('frequency')
 
-                # 주식 데이터를 조회
-                if country.lower() == "kr":  # 한국 주식
-                    stock_data = KRSTOCKDATA.objects.filter(name=company, date__gte=initial_date).order_by('date')
-                else:  # 미국 주식 (또는 다른 나라 주식 추가 가능)
-                    stock_data = USSTOCKDATA.objects.filter(name=company, date__gte=initial_date).order_by('date')
+            country = data['country'].lower()  # 추가된 country 필드 (kr 또는 us)
+            company = data['company']
+            initial_inv = data['initial_amount']
+            additional_inv = data.get('additional_amount', 0)
+            frequency_map = {'weekly': 5, 'biweekly': 10, 'monthly': 20, 'bimonthly': 40}
+            frequency = frequency_map.get(data.get('frequency'))
 
-                if not stock_data.exists():
-                    return Response({"error": "No stock data found for the given period."}, status=status.HTTP_404_NOT_FOUND)
+            # 테이블 선택 (kr_stock_data 또는 us_stock_data)
+            if country == 'kr':
+                table_name = 'kr_stock_data'
+            elif country == 'us':
+                table_name = 'us_stock_data'
+            else:
+                return Response({"error": "Invalid country specified."}, status=status.HTTP_400_BAD_REQUEST)
 
-                # 초기 값 설정
-                total_investment = initial_amount
-                total_shares = initial_amount / stock_data.first().open_value
-                current_date = initial_date
+            sql_query = f"""
+                WITH InvestmentDates AS (
+                  SELECT date, rn
+                  FROM (
+                    SELECT date, ROW_NUMBER() OVER (ORDER BY date) AS rn
+                    FROM {table_name}
+                    WHERE name = %s AND date >= %s
+                  ) subquery
+                  WHERE rn = 1 OR (rn - 1) %% %s = 0
+                ),
+                PurchaseData AS (
+                  SELECT 
+                    i.date,
+                    k.open_value,
+                    CASE WHEN k.open_value = 0 THEN 0
+                         WHEN i.rn = 1 THEN %s ELSE %s END AS investment,
+                    CASE WHEN k.open_value = 0 THEN 0
+                         WHEN i.rn = 1 THEN %s / k.open_value 
+                         ELSE %s / k.open_value END AS purchased_shares
+                  FROM InvestmentDates i
+                  JOIN {table_name} k ON i.date = k.date AND k.name = %s
+                ),
+                TotalCalculations AS (
+                  SELECT 
+                    SUM(purchased_shares) AS total_shares,
+                    SUM(investment) AS total_investment
+                  FROM PurchaseData
+                )
+                SELECT 
+                  total_shares,
+                  total_investment,
+                  TRUNC((SELECT open_value FROM {table_name} WHERE name = %s AND open_value > 0 ORDER BY date DESC LIMIT 1) * total_shares - total_investment) AS total_profit_loss
+                FROM TotalCalculations;
+            """
 
-                # 정기 투자에 따른 수익률 계산
-                for stock in stock_data:
-                    if stock.date >= current_date:
-                        # 다음 투자일인지 확인
-                        if stock.date == current_date:
-                            total_investment += additional_amount
-                            total_shares += additional_amount / stock.open_value
-                            current_date = self.get_next_investment_date(current_date, frequency)
+            try:
+                # 디버깅용 로그 추가
+                logger.debug(f"Executing SQL query with params: company={company}, initial_date={initial_date}, frequency={frequency}, initial_inv={initial_inv}, additional_inv={additional_inv}, table={table_name}")
 
-                # 마지막 날의 투자 가치 계산
-                final_value = total_shares * stock_data.last().open_value
-                profit = (final_value - total_investment) / total_investment * 100  # 수익률 계산
-
-                result = {
-                    "company": company,
-                    "initial_amount": initial_amount,
-                    "initial_date": data['initial_date'],
-                    "additional_amount": additional_amount,
-                    "frequency": frequency,
-                    "final_value": round(final_value, 2),
-                    "profit_percentage": round(profit, 2)
-                }
-                return Response(result, status=status.HTTP_200_OK)
+                # SQL 쿼리를 실행하고 결과를 가져옴
+                with connection.cursor() as cursor:
+                    cursor.execute(sql_query, (
+                        company, 
+                        initial_date, 
+                        frequency, 
+                        initial_inv, 
+                        additional_inv, 
+                        initial_inv, 
+                        additional_inv, 
+                        company, 
+                        company
+                    ))
+                    result = cursor.fetchone()
+                
+                if result:
+                    total_shares, total_investment, total_profit_loss = result
+                    response_data = {
+                        "company": company,
+                        "initial_amount": initial_inv,
+                        "initial_date": initial_date.strftime('%Y-%m-%d'),
+                        "additional_amount": additional_inv,
+                        "frequency": data.get('frequency'),
+                        "total_shares": total_shares,
+                        "total_investment": total_investment,
+                        "total_profit_loss": total_profit_loss
+                    }
+                    logger.debug(f"Query Result: {response_data}")
+                    return Response(response_data, status=status.HTTP_200_OK)
+                else:
+                    logger.debug("No data found for the given parameters.")
+                    return Response({"error": "Calculation failed, no data found."}, status=status.HTTP_404_NOT_FOUND)
 
             except Exception as e:
+                logger.error(f"Unexpected error occurred: {str(e)}")
                 return Response({"error": f"Unexpected error occurred: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

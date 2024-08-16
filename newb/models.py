@@ -59,7 +59,7 @@ class InterestRates(models.Model):
     
 class HighKR(models.Model):
     name = models.CharField(max_length=100, db_column='name')  
-    date = models.DateField(db_column='date')  
+    date = models.DateField(db_column='date', primary_key=True)  
     change = models.DecimalField(max_digits=10, decimal_places=2, db_column='change')  
 
     class Meta:
@@ -71,7 +71,7 @@ class HighKR(models.Model):
 
 class HighUS(models.Model):
     name = models.CharField(max_length=100, db_column='name')  
-    date = models.DateField(db_column='date')  
+    date = models.DateField(db_column='date', primary_key=True)  
     change = models.DecimalField(max_digits=10, decimal_places=2, db_column='change')  
 
     class Meta:
