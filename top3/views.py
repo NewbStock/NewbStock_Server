@@ -9,6 +9,8 @@ import pandas as pd
 import io
 import os
 from datetime import datetime, timedelta
+from .serializers import StockRankSerializer
+from .models import StockRank
 
 # Create your views here.
 class s3newsgetView(APIView):
@@ -85,3 +87,11 @@ class s3newsgetView(APIView):
 
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class StockRankListView(APIView):
+    def get(self, request):
+        # StockRank 모델을 사용하여 데이터베이스에서 모든 객체를 가져옵니다.
+        stock_ranks = StockRank.objects.all()  # 모델의 쿼리셋
+        serializer = StockRankSerializer(stock_ranks, many=True)  # 시리얼라이저를 통해 직렬화
+        return Response(serializer.data, status=status.HTTP_200_OK)
