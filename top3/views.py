@@ -91,7 +91,6 @@ class s3newsgetView(APIView):
 
 class StockRankListView(APIView):
     def get(self, request):
-        # StockRank 모델을 사용하여 데이터베이스에서 모든 객체를 가져옵니다.
-        stock_ranks = StockRank.objects.all()  # 모델의 쿼리셋
-        serializer = StockRankSerializer(stock_ranks, many=True)  # 시리얼라이저를 통해 직렬화
+        stock_ranks = StockRank.objects.all()
+        serializer = StockRankSerializer(stock_ranks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
