@@ -72,7 +72,7 @@ DATABASES = {
         'USER': os.getenv('DB_USER'),
         'PASSWORD': os.getenv('DB_PASSWORD'),
         'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -121,6 +121,7 @@ ALLOWED_HOSTS = [
     'team-won-2-alb-1672477310.ap-northeast-2.elb.amazonaws.com',
     '127.0.0.1',
     'localhost',
+    '54.180.65.81'
 ]
 
 LOGIN_REDIRECT_URL = '/'
