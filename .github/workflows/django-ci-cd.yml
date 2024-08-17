@@ -21,19 +21,12 @@ jobs:
       with:
         python-version: '3.12'
 
-    - name: Initialize Conda
-      shell: bash -l {0}
+    - name: Install dependencies with pip (locally)
       run: |
-        conda init bash
-        source ~/.bashrc
-        conda activate newbstock
-        conda install --file requirements.txt -y
         pip install -r requirements.txt
 
     - name: Run tests
-      shell: bash -l {0}
       run: |
-        conda activate newbstock
         python manage.py test
 
   deploy:
@@ -43,20 +36,6 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
-    - name: Set up Python
-      uses: actions/setup-python@v3
-      with:
-        python-version: '3.12'
-
-    - name: Initialize Conda
-      shell: bash -l {0}
-      run: |
-        conda init bash
-        source ~/.bashrc
-        conda activate newbstock
-        conda install --file requirements.txt -y
-        pip install -r requirements.txt
 
     - name: Deploy to server through Bastion Host
       shell: bash -l {0}
@@ -88,10 +67,21 @@ jobs:
         cd /home/ubuntu/NewbStock_Server
         git config --global --add safe.directory /home/ubuntu/NewbStock_Server
         git pull origin main
+        
+        # Conda 환경 활성화
+        source ~/miniconda3/etc/profile.d/conda.sh
         conda activate newbstock
+        
+        # 필요한 패키지 설치 및 마이그레이션 수행
         conda install --file requirements.txt -y
         pip install -r requirements.txt
         python manage.py migrate
+        
+        # 서비스 재시작
         sudo systemctl restart gunicorn
         sudo systemctl restart nginx
         EOF
+
+    - name: Clean up SSH keys
+      run: |
+        rm -f bastion_key.pem server_key.pem
