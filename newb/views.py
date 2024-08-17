@@ -237,3 +237,4 @@ class InterestRateChartView(APIView):
             return Response({"error": "날짜 형식이 잘못되었습니다. YYYY-MM-DD 형식을 사용하세요."}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+

@@ -42,4 +42,3 @@ class StockUSTop100Serializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-
