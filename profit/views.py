@@ -70,7 +70,7 @@ class InvestmentDataView(APIView):
                   FROM PurchaseData
                 )
                 SELECT 
-                  total_shares,
+                  round(total_shares, 2),
                   total_investment,
                   TRUNC((SELECT open_value FROM {table_name} WHERE name = %s AND open_value > 0 ORDER BY date DESC LIMIT 1) * total_shares - total_investment) AS total_profit_loss
                 FROM TotalCalculations;

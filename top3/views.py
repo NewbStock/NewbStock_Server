@@ -75,7 +75,7 @@ class s3newsgetView(APIView):
                 # CSV 파일을 헤더 없이 읽기
                 df = pd.read_csv(io.StringIO(csv_string), header=None)
                 # 열 이름을 수동으로 지정
-                df.columns = ["title", "originallink", "link", "description", "pubDate"]
+                df.columns = ["name" ,"title", "originallink", "link", "description", "pubDate"]
             else:
                 return Response({"error": "오늘과 어제의 news 데이터가 없습니다.(수정가능)"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
@@ -89,8 +89,40 @@ class s3newsgetView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-class StockRankListView(APIView):
+class TopGainersView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('country', openapi.IN_QUERY, description="Country code ('kr' for Korea, 'EN' for USA)", type=openapi.TYPE_STRING),
+        ]
+    )
     def get(self, request):
-        stock_ranks = StockRank.objects.all()
-        serializer = StockRankSerializer(stock_ranks, many=True)
+        country = request.query_params.get('country')
+        
+        if country:
+            stock_ranks = StockRank.objects.filter(country=country.upper())
+        else:
+            stock_ranks = StockRank.objects.all()
+
+        top_gainers = stock_ranks.filter(rank__lte=3).order_by('rank')
+        
+        serializer = StockRankSerializer(top_gainers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class TopLosersView(APIView):
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter('country', openapi.IN_QUERY, description="Country code ('kr' for Korea, 'EN' for USA)", type=openapi.TYPE_STRING),
+        ]
+    )
+    def get(self, request):
+        country = request.query_params.get('country')
+        
+        if country:
+            stock_ranks = StockRank.objects.filter(country=country.upper())
+        else:
+            stock_ranks = StockRank.objects.all()
+
+        top_losers = stock_ranks.filter(rank__gte=4, rank__lte=6).order_by('rank')
+        
+        serializer = StockRankSerializer(top_losers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
