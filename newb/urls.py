@@ -14,7 +14,5 @@ urlpatterns = [
     path('kospi/',KospiKosdaqChartView.as_view(), name='KospiChartView'),
     path('interestrates/',InterestRateChartView.as_view(), name='InterestRatesChartView'),
     path('newssentiment/',NewsSentimentChartView.as_view(), name='NewsSentimentChartView'),
-
-
 ]
 

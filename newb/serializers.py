@@ -42,3 +42,13 @@ class StockUSTop100Serializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class StockKRHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockKRHistory
+        fields = '__all__'
+
+
+class StockUSHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StockUSHistory
+        fields = '__all__'

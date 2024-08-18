@@ -105,3 +105,31 @@ class StockUSTop100(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.code}) - {self.excode}"
+
+class StockKRHistory(models.Model):
+    date = models.DateField(db_column='date', primary_key=True)  # `date`와 `name`을 복합 키로 사용하기 위해 primary_key=True 제거
+    name = models.CharField(max_length=100, db_column='name')  
+    code = models.CharField(max_length=20, db_column='code') 
+    open_value = models.DecimalField(max_digits=8, decimal_places=2, db_column='open_value') 
+
+    class Meta:
+        managed = False
+        db_table = 'kr_stock_data'
+        unique_together = (('date', 'name'),)  # 복합 키를 설정
+
+    def __str__(self):
+        return f"{self.date} - {self.name} ({self.code}) - {self.open_value} KRW"
+
+class StockUSHistory(models.Model):
+    date = models.DateField(db_column='date', primary_key=True)  # `date`와 `name`을 복합 키로 사용하기 위해 primary_key=True 제거
+    name = models.CharField(max_length=100, db_column='name')  
+    code = models.CharField(max_length=20, db_column='code') 
+    open_value = models.DecimalField(max_digits=8, decimal_places=2, db_column='open_value') 
+
+    class Meta:
+        managed = False
+        db_table = 'us_stock_data'
+        unique_together = (('date', 'name'),)  # 복합 키를 설정
+
+    def __str__(self):
+        return f"{self.date} - {self.name} ({self.code}) - {self.open_value} USD"
