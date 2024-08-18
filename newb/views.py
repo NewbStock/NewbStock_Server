@@ -98,23 +98,24 @@ class HighChangeStock(APIView):
         country = request.query_params.get('country', 'kr').lower()
         
         if country == 'kr':
-            queryset = HighKR.objects.all().order_by('-change')
+            queryset = HighKR.objects.all().order_by('-date')  # 날짜 기준으로 최신 데이터 먼저 가져오기
             serializer_class = HighKRSerializer
         elif country == 'us':
-            queryset = HighUS.objects.all().order_by('-change')
+            queryset = HighUS.objects.all().order_by('-date')  # 날짜 기준으로 최신 데이터 먼저 가져오기
             serializer_class = HighUSASerializer
         else:
             return Response({"error": "Invalid country code."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # 종목별로 상위 5개 항목을 선택
+        # 데이터 그룹화
         grouped_data = defaultdict(list)
         for item in queryset:
             grouped_data[item.name].append(item)
-            if len(grouped_data[item.name]) > 5:
-                grouped_data[item.name] = grouped_data[item.name][:5]
 
-        # 모든 그룹을 병합
-        top_items = [item for items in grouped_data.values() for item in items]
+        # 각 종목별로 최신 5개의 항목 선택
+        top_items = []
+        for items in grouped_data.values():
+            sorted_items = sorted(items, key=lambda x: x.date, reverse=True)  # 날짜 기준으로 내림차순 정렬
+            top_items.extend(sorted_items[:5])  # 최신 5개 항목만 선택
 
         # 시리얼라이즈
         serializer = serializer_class(top_items, many=True)
